@@ -7,7 +7,7 @@
 // CWebApplication properties can be configured here.
 return array(
 	'basePath'=>dirname(__FILE__).DIRECTORY_SEPARATOR.'..',
-	'name'=>'My Web Application',
+	'name'=>'Yii Learn Active Record',
 
 	// preloading 'log' component
 	'preload'=>array('log'),
@@ -40,9 +40,12 @@ return array(
 
 		'urlManager'=>array(
 			'urlFormat'=>'path',
+			'showScriptName' => false,
 			'rules'=>array(
 				'<controller:\w+>/<id:\d+>'=>'<controller>/view',
+				'<controller:\w+>/<action:\w+>/<title:\w+>'=>'ActiveRecordTest/<action>',
 				'<controller:\w+>/<action:\w+>/<id:\d+>'=>'<controller>/<action>',
+
 				'<controller:\w+>/<action:\w+>'=>'<controller>/<action>',
 			),
 		),
@@ -60,7 +63,11 @@ return array(
 			'username' => 'root',
 			'password' => '063',
 			'charset' => 'utf8',
-			'tablePrefix' => 'tbl_'
+			'tablePrefix' => 'tbl_',
+
+			// for debuging
+			'enableProfiling'=>true,
+    	'enableParamLogging' => true,
 		),
 
 		'errorHandler'=>array(
@@ -74,6 +81,11 @@ return array(
 					'class'=>'CFileLogRoute',
 					'levels'=>'error, warning',
 				),
+				array(
+					'class' => 'CProfileLogRoute',
+					'levels' => 'profile',
+					'enabled' => true
+				)
 				// uncomment the following to show log messages on web pages
 				/*
 				array(
