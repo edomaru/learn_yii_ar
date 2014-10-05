@@ -60,6 +60,7 @@ class User extends CActiveRecord
 		return array(
 			'posts' => array(self::HAS_MANY, 'Post', 'author_id'),
 			'profile' => array(self::HAS_ONE, 'Profile', 'owned_id'),
+			'postsSearch' => array(self::HAS_MANY, 'Post', 'author_id')
 		);
 	}
 
