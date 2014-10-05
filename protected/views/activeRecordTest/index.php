@@ -5,6 +5,12 @@ $this->pageTitle=Yii::app()->name;
 ?>
 
 <ul>
+	<li><?php echo CHtml::link("Get Post with user by ID 10 (lazy loading)", array("ActiveRecordTest/getPostWithUserById", "id" => 10)); ?></li>
+	<li><?php echo CHtml::link("Get Post with user by ID 10 (eager loading)", array("ActiveRecordTest/getPostWithUserById2", "id" => 10)); ?></li>
+	<li><?php echo CHtml::link("Get Posts with user and categories (lazy loading)", array("ActiveRecordTest/getPostsWithUserAndCategories")); ?></li>
+	<li><?php echo CHtml::link("Get Posts with user and categories (eager loading)", array("ActiveRecordTest/getPostsWithUserAndCategories2")); ?></li>
+	<li><?php echo CHtml::link("Get Posts with user profile and categories (lazy loading)", array("ActiveRecordTest/getPostsWithUserProfileAndCategories")); ?></li>
+	<li><?php echo CHtml::link("Get Posts with user profile and categories (eager loading)", array("ActiveRecordTest/getPostsWithUserProfileAndCategories2")); ?></li>
 	<li><?php echo CHtml::link("Get Posts by Title 'post No 1'", array("ActiveRecordTest/getPostsByTitle", "title" => "post no 1")) ?></li>
 	<li><?php echo CHtml::link("Get Posts with Author by Title 'post No 1'", array("ActiveRecordTest/getPostsWithAuthorByTitle", "title" => "post no 1")) ?></li>
 	<li><?php echo CHtml::link("Get Posts with Author by Title 'post No 1' (2)", array("ActiveRecordTest/getPostsWithAuthorByTitle2", "title" => "post no 1")) ?></li>

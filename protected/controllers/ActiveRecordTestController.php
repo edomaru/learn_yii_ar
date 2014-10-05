@@ -12,6 +12,168 @@ class ActiveRecordTestController extends Controller
 		$this->render('index');
 	}
 
+	public function actionGetPostWithUserById($id)
+	{
+		$post = Post::model()->findByPk($id);
+		echo "Title : " . $post->title . "<br />";
+		echo "Author : " . $post->author->username . "<br />";
+		echo "Content : " . $post->content;
+
+		// SELECT * FROM `tbl_post` `t` WHERE `t`.`id`=10 LIMIT 1
+		// SELECT `author`.`id` AS `t1_c0`, `author`.`username` AS `t1_c1`, `author`.`password` AS `t1_c2`, `author`.`email` AS `t1_c3` FROM `tbl_user` `author` WHERE (`author`.`id`=:ypl0). Bound with :ypl0='8'
+	}
+
+	public function actionGetPostWithUserById2($id)
+	{
+		$post = Post::model()->with("author")->findByPk($id);
+		echo "Title : " . $post->title . "<br />";
+		echo "Author : " . $post->author->username . "<br />";
+		echo "Content : " . $post->content;
+
+		// SELECT `t`.`id` AS `t0_c0`, `t`.`title` AS `t0_c1`, `t`.`content` AS `t0_c2`, `t`.`create_time` AS `t0_c3`, `t`.`author_id` AS `t0_c4`, `t`.`published` AS `t0_c5`, `author`.`id` AS `t1_c0`, `author`.`username` AS `t1_c1`, `author`.`password` AS `t1_c2`, `author`.`email` AS `t1_c3` FROM `tbl_post` `t` LEFT OUTER JOIN `tbl_user` `author` ON (`t`.`author_id`=`author`.`id`) WHERE (`t`.`id`=10)
+	}
+
+	public function actionGetPostsWithUserAndCategories()
+	{
+		$posts = Post::model()->findAll(array('limit' => 50));
+
+		foreach ($posts as $post)
+		{
+				echo "Title : " . $post->title . "<br />";
+				echo "Author : " . $post->author->username . "<br />";
+				echo "Post categories : ";
+
+				$categories = array();
+				foreach ($post->categories as $category) {
+					$categories[] = $category->name;
+				}
+
+				echo implode(", ", $categories);
+				echo "<br /><br />";
+		}
+
+		// SELECT * FROM `tbl_post` `t` LIMIT 50
+		// loop 50x this query
+		// SELECT `author`.`id` AS `t1_c0`, `author`.`username` AS `t1_c1`, `author`.`password` AS `t1_c2`, `author`.`email` AS `t1_c3` FROM `tbl_user` `author` WHERE (`author`.`id`=:ypl0). Bound with :ypl0='17'
+		// ...
+		// SELECT `categories`.`id` AS `t1_c0`, `categories`.`name` AS `t1_c1` FROM `tbl_category` `categories` INNER JOIN `tbl_post_category` `categories_categories` ON (`categories_categories`.`post_id`=:ypl0) AND (`categories`.`id`=`categories_categories`.`category_id`). Bound with :ypl0='17'
+	}
+
+	public function actionGetPostsWithUserAndCategories2()
+	{
+		$posts = Post::model()->with("author", "categories")->findAll(array('limit' => 50));
+
+		foreach ($posts as $post)
+		{
+				echo "Title : " . $post->title . "<br />";
+				echo "Author : " . $post->author->username . "<br />";
+				echo "Post categories : ";
+
+				$categories = array();
+				foreach ($post->categories as $category) {
+					$categories[] = $category->name;
+				}
+
+				echo implode(", ", $categories);
+				echo "<br /><br />";
+		}
+
+		// akan menjalankan 2 query
+		// SELECT `t`.`id` AS `t0_c0`, `t`.`title` AS `t0_c1`, `t`.`content` AS `t0_c2`, `t`.`create_time` AS `t0_c3`, `t`.`author_id` AS `t0_c4`, `t`.`published` AS `t0_c5`, `author`.`id` AS `t1_c0`, `author`.`username` AS `t1_c1`, `author`.`password` AS `t1_c2`, `author`.`email` AS `t1_c3` FROM `tbl_post` `t` LEFT OUTER JOIN `tbl_user` `author` ON (`t`.`author_id`=`author`.`id`) LIMIT 50
+		// SELECT `t`.`id` AS `t0_c0`, `categories`.`id` AS `t2_c0`, `categories`.`name` AS `t2_c1` FROM `tbl_post` `t` LEFT OUTER JOIN `tbl_post_category` `categories_categories` ON (`t`.`id`=`categories_categories`.`post_id`) LEFT OUTER JOIN `tbl_category` `categories` ON (`categories`.`id`=`categories_categories`.`category_id`) WHERE (`t`.`id` IN (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50))
+	}
+
+	public function actionGetPostsWithUserProfileAndCategories()
+	{
+		$posts = Post::model()->findAll(array('limit' => 20));
+
+		foreach ($posts as $post)
+		{
+			echo "Title : " . $post->title . "<br />";
+			echo "Author Bio : <br />";
+
+			$author = $post->author;
+			$profile = $author->profile;
+
+			echo "Name : " . $author->username . "<br />";
+			echo "Photo : " . $profile->photo . "<br />";
+			echo "Website : " . $profile->website . "<br />";
+			echo "Post categories : ";
+
+			$categories = array();
+			foreach ($post->categories as $category) {
+				$categories[] = $category->name;
+			}
+
+			echo implode(", ", $categories);
+			echo "<br /><br />";
+
+			echo "Other posts from user : <br />";
+			echo "<ol>";
+			$userPosts = $author->posts(array('condition' => 'id != :id', 'params' => array(':id' => $post->id)));
+			foreach ($userPosts as $userPost)
+			{
+				echo "<li>" . $userPost->title . "</li>";
+			}
+			echo "</ol>";
+			echo "<hr />";
+		}
+
+		// SELECT * FROM `tbl_post` `t` LIMIT 20
+		// loop 20x this query:
+		// SELECT `author`.`id` AS `t1_c0`, `author`.`username` AS `t1_c1`, `author`.`password` AS `t1_c2`, `author`.`email` AS `t1_c3` FROM `tbl_user` `author` WHERE (`author`.`id`=:ypl0). Bound with :ypl0='4'
+		// SELECT `posts`.`id` AS `t1_c0`, `posts`.`title` AS `t1_c1`, `posts`.`content` AS `t1_c2`, `posts`.`create_time` AS `t1_c3`, `posts`.`author_id` AS `t1_c4`, `posts`.`published` AS `t1_c5` FROM `tbl_post` `posts` WHERE (id != :id) AND (`posts`.`author_id`=:ypl0). Bound with :id='2', :ypl0='4'
+		// SELECT `profile`.`owned_id` AS `t1_c0`, `profile`.`photo` AS `t1_c1`, `profile`.`website` AS `t1_c2` FROM `tbl_profile` `profile` WHERE (`profile`.`owned_id`=:ypl0). Bound with :ypl0='4'
+		// SELECT `categories`.`id` AS `t1_c0`, `categories`.`name` AS `t1_c1` FROM `tbl_category` `categories` INNER JOIN `tbl_post_category` `categories_categories` ON (`categories_categories`.`post_id`=:ypl0) AND (`categories`.`id`=`categories_categories`.`category_id`). Bound with :ypl0='2'
+	}
+
+	public function actionGetPostsWithUserProfileAndCategories2()
+	{
+		$posts = Post::model()->with(
+			'author.profile',
+			'author.posts',
+			'categories'
+		)->findAll(array('limit' => 20));
+
+		foreach ($posts as $post)
+		{
+			echo "Title : " . $post->title . "<br />";
+			echo "Author Bio : <br />";
+
+			$author = $post->author;
+			$profile = $author->profile;
+
+			echo "Name : " . $author->username . "<br />";
+			echo "Photo : " . $profile->photo . "<br />";
+			echo "Website : " . $profile->website . "<br />";
+			echo "Post categories : ";
+
+			$categories = array();
+			foreach ($post->categories as $category) {
+				$categories[] = $category->name;
+			}
+
+			echo implode(", ", $categories);
+			echo "<br /><br />";
+
+			echo "Other posts from user : <br />";
+			echo "<ol>";
+			$userPosts = $author->posts(array('condition' => 'id != :id', 'params' => array(':id' => $post->id)));
+			foreach ($userPosts as $userPost)
+			{
+				echo "<li>" . $userPost->title . "</li>";
+			}
+			echo "</ol>";
+			echo "<hr />";
+
+			// SELECT `t`.`id` AS `t0_c0`, `t`.`title` AS `t0_c1`, `t`.`content` AS `t0_c2`, `t`.`create_time` AS `t0_c3`, `t`.`author_id` AS `t0_c4`, `t`.`published` AS `t0_c5`, `author`.`id` AS `t1_c0`, `author`.`username` AS `t1_c1`, `author`.`password` AS `t1_c2`, `author`.`email` AS `t1_c3`, `profile`.`owned_id` AS `t2_c0`, `profile`.`photo` AS `t2_c1`, `profile`.`website` AS `t2_c2` FROM `tbl_post` `t` LEFT OUTER JOIN `tbl_user` `author` ON (`t`.`author_id`=`author`.`id`) LEFT OUTER JOIN `tbl_profile` `profile` ON (`profile`.`owned_id`=`author`.`id`) LIMIT 20
+			// SELECT `author`.`id` AS `t1_c0`, `posts`.`id` AS `t3_c0`, `posts`.`title` AS `t3_c1`, `posts`.`content` AS `t3_c2`, `posts`.`create_time` AS `t3_c3`, `posts`.`author_id` AS `t3_c4`, `posts`.`published` AS `t3_c5` FROM `tbl_user` `author` LEFT OUTER JOIN `tbl_post` `posts` ON (`posts`.`author_id`=`author`.`id`) WHERE (`author`.`id` IN (4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14))
+			// SELECT `t`.`id` AS `t0_c0`, `categories`.`id` AS `t4_c0`, `categories`.`name` AS `t4_c1` FROM `tbl_post` `t` LEFT OUTER JOIN `tbl_post_category` `categories_categories` ON (`t`.`id`=`categories_categories`.`post_id`) LEFT OUTER JOIN `tbl_category` `categories` ON (`categories`.`id`=`categories_categories`.`category_id`) WHERE (`t`.`id` IN (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20))
+			// loop 20x this query
+			// SELECT `posts`.`id` AS `t1_c0`, `posts`.`title` AS `t1_c1`, `posts`.`content` AS `t1_c2`, `posts`.`create_time` AS `t1_c3`, `posts`.`author_id` AS `t1_c4`, `posts`.`published` AS `t1_c5` FROM `tbl_post` `posts` WHERE (id != :id) AND (`posts`.`author_id`=:ypl0). Bound with :id='3', :ypl0='4'
+		}
+	}
+
 	public function actionGetPostsByTitle($title)
 	{
 		// Show all posts that has a word in post title
