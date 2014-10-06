@@ -174,6 +174,109 @@ class ActiveRecordTestController extends Controller
 		}
 	}
 
+	public function actionGetUsersWithProfileAndLast3Posts()
+	{
+		$users = User::model()->findAll(array('limit' => 10));
+
+		foreach ($users as $user)
+		{
+			echo "Author : " . $user->username . "<br />";
+			echo "Website : " . $user->profile->website . "<br />";
+			echo "Last post : <br />";
+
+			$posts = $user->posts(array('order' => 'posts.create_time desc', 'limit' => 3));
+			echo "<ul>";
+			foreach ($posts as $post) {
+				echo "<li>" . $post->title . "</li>";
+			}
+			echo "</ul>";
+		}
+
+		// SELECT * FROM `tbl_user` `t` LIMIT 10
+		// loop 10x
+		// SELECT `posts`.`id` AS `t1_c0`, `posts`.`title` AS `t1_c1`, `posts`.`content` AS `t1_c2`, `posts`.`create_time` AS `t1_c3`, `posts`.`author_id` AS `t1_c4`, `posts`.`published` AS `t1_c5` FROM `tbl_post` `posts` WHERE (`posts`.`author_id`=:ypl0) ORDER BY posts.create_time desc LIMIT 3. Bound with :ypl0='8'
+		// SELECT `profile`.`owned_id` AS `t1_c0`, `profile`.`photo` AS `t1_c1`, `profile`.`website` AS `t1_c2` FROM `tbl_profile` `profile` WHERE (`profile`.`owned_id`=:ypl0). Bound with :ypl0='10'
+	}
+
+	public function actionGetUsersWithProfileAndLast3Posts2()
+	{
+		$criteria = new CDbCriteria();
+		// $criteria->limit = 10;
+		$criteria->with = array(
+			'posts' => array('order' => 'posts.create_time desc'),
+			'profile',
+		);
+		$criteria->limit = 10;
+
+		$users = User::model()->findAll($criteria);
+
+		/*
+		$users = User::model()->with(array(
+			'posts' => array('order' => 'posts.create_time desc'),
+			'profile',
+		))->findAll();*/
+
+		foreach ($users as $user)
+		{
+			echo "Author : " . $user->username . "<br />";
+			echo "Website : " . $user->profile->website . "<br />";
+			echo "Last post : <br />";
+
+			echo "<ul>";
+			foreach ($user->posts as $post) {
+				echo "<li>" . $post->title . "</li>";
+			}
+			echo "</ul>";
+		}
+
+		// tampa limit akan menjalankan 1 query
+		// SELECT `t`.`id` AS `t0_c0`, `t`.`username` AS `t0_c1`, `t`.`password` AS `t0_c2`, `t`.`email` AS `t0_c3`, `posts`.`id` AS `t1_c0`, `posts`.`title` AS `t1_c1`, `posts`.`content` AS `t1_c2`, `posts`.`create_time` AS `t1_c3`, `posts`.`author_id` AS `t1_c4`, `posts`.`published` AS `t1_c5`, `profile`.`owned_id` AS `t2_c0`, `profile`.`photo` AS `t2_c1`, `profile`.`website` AS `t2_c2` FROM `tbl_user` `t` LEFT OUTER JOIN `tbl_post` `posts` ON (`posts`.`author_id`=`t`.`id`) LEFT OUTER JOIN `tbl_profile` `profile` ON (`profile`.`owned_id`=`t`.`id`) ORDER BY posts.create_time desc
+
+		// dengan limit
+		// SELECT `t`.`id` AS `t0_c0`, `t`.`username` AS `t0_c1`, `t`.`password` AS `t0_c2`, `t`.`email` AS `t0_c3`, `profile`.`owned_id` AS `t2_c0`, `profile`.`photo` AS `t2_c1`, `profile`.`website` AS `t2_c2` FROM `tbl_user` `t` LEFT OUTER JOIN `tbl_profile` `profile` ON (`profile`.`owned_id`=`t`.`id`) LIMIT 10
+		// SELECT `t`.`id` AS `t0_c0`, `posts`.`id` AS `t1_c0`, `posts`.`title` AS `t1_c1`, `posts`.`content` AS `t1_c2`, `posts`.`create_time` AS `t1_c3`, `posts`.`author_id` AS `t1_c4`, `posts`.`published` AS `t1_c5` FROM `tbl_user` `t` LEFT OUTER JOIN `tbl_post` `posts` ON (`posts`.`author_id`=`t`.`id`) WHERE (`t`.`id` IN (4, 5, 6, 7, 8, 9, 10, 11, 12, 13)) ORDER BY posts.create_time desc
+	}
+
+	public function actionGetLast10PostsWithComments()
+	{
+		$posts = Post::model()->findAll(array('limit' => 10, 'order' => 'create_time desc'));
+		foreach ($posts as $no => $post)
+		{
+			echo "Post No $no " . $post->title . "<br />";
+			foreach ($post->comments as $comment) {
+				echo $comment->author . " says " . $comment->content . "<br /><br />";
+			}
+			echo "<hr />";
+		}
+
+		// SELECT * FROM `tbl_post` `t` ORDER BY create_time desc LIMIT 10
+		// loop 10x
+		// SELECT `comments`.`id` AS `t1_c0`, `comments`.`post_id` AS `t1_c1`, `comments`.`content` AS `t1_c2`, `comments`.`author` AS `t1_c3`, `comments`.`visible` AS `t1_c4` FROM `tbl_comment` `comments` WHERE (`comments`.`post_id`=:ypl0). Bound with :ypl0='338'
+	}
+
+	public function actionGetLast10PostsWithComments2()
+	{
+		$posts = Post::model()->with(array(
+			'comments' => array('together' => false)
+		))->findAll(array(
+			'limit' => 10,
+			'order' => 'create_time desc')
+		);
+
+		foreach ($posts as $no => $post)
+		{
+			echo "Post No $no " . $post->title . "<br />";
+			foreach ($post->comments as $comment) {
+				echo $comment->author . " says " . $comment->content . "<br /><br />";
+			}
+			echo "<hr />";
+		}
+
+		// SELECT `t`.`id` AS `t0_c0`, `t`.`title` AS `t0_c1`, `t`.`content` AS `t0_c2`, `t`.`create_time` AS `t0_c3`, `t`.`author_id` AS `t0_c4`, `t`.`published` AS `t0_c5` FROM `tbl_post` `t` ORDER BY create_time desc LIMIT 10
+		// SELECT `t`.`id` AS `t0_c0`, `comments`.`id` AS `t1_c0`, `comments`.`post_id` AS `t1_c1`, `comments`.`content` AS `t1_c2`, `comments`.`author` AS `t1_c3`, `comments`.`visible` AS `t1_c4` FROM `tbl_post` `t` LEFT OUTER JOIN `tbl_comment` `comments` ON (`comments`.`post_id`=`t`.`id`) WHERE (`t`.`id` IN (330, 331, 332, 333, 334, 335, 336, 337, 338, 339))
+
+	}
+
 	public function actionGetPostsByTitle($title)
 	{
 		// Show all posts that has a word in post title
